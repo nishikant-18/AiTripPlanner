@@ -2,9 +2,19 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import BudgetSelector from "@/components/ui/constants/BudgetSelector";
-
+import { FcGoogle } from "react-icons/fc";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { useGoogleLogin, useGoogleOAuth } from "@react-oauth/google";
 function CreateTrip() {
   const AutoCompleteAPI=import.meta.env.AUTOCOMPLETE_API;
+  const [openDialog,setOpenDialog]=useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -16,9 +26,30 @@ function CreateTrip() {
   });
    const [loading, setLoading] = useState(false);
   const API_KEY = import.meta.env.VITE_AUTOCOMPLETE_API;
+  const glogin=useGoogleLogin({
+    onSuccess: (response)=>{
+      console.log(response);
+      GetUserProfile(response);
+      setOpenDialog(false);
+    },
+    onError: (error)=>console.log(error)
+  });
+  const GetUserProfile=(tokenInfo)=>{
+    axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenInfo.access_token}`,{
+      headers: {
+        Authorization: `Bearer ${tokenInfo.access_token}`,
+        Accept: 'application/json'
+      }
+    })
+    .then((response) => {
+      console.log("User Profile:", response.data);
+      window.localStorage.setItem('user', JSON.stringify(response.data));
+    })
+    .catch((error) => {
+      console.error("Error fetching user profile:", error);
+    });
+  };
 
-
-  
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (query.length < 2) {
@@ -54,6 +85,17 @@ function CreateTrip() {
 
   // ✅ Handle form submission
   const handleSubmit = async () => {
+    const user = window.localStorage.getItem('user');
+
+    if(!user){
+      setOpenDialog(true);
+      return;
+    }
+    if(!formData.destination || formData.days<3 || !formData.budget || !selectedGroup) {
+      alert("Please fill in all fields");
+      return;
+    }
+
   const finalData = { ...formData, group: selectedGroup };
   try {
     setLoading(true);
@@ -64,6 +106,7 @@ function CreateTrip() {
   } finally {
     setLoading(false);
   }
+  
 };
   
   
@@ -183,6 +226,39 @@ function CreateTrip() {
           {loading ? "Generating..." : "Generate Itinerary"}
         </Button>
       </div>
+      <Dialog open={openDialog}>
+  <DialogContent>
+    
+    {/* 1. Header and Title */}
+    <DialogHeader className="text-center">
+      
+      {/* Logo/Icon is often placed before the title */}
+      <div className="flex justify-center mb-4">
+        <img src="/logo.svg" alt="App Logo" className="h-25 w-25" />
+      </div>
+      
+      {/* The main, bold title goes in DialogTitle */}
+      <DialogTitle>
+        Sign in with Google
+      </DialogTitle>
+      
+      {/* The supporting text goes in DialogDescription */}
+      <DialogDescription>
+        Sign in to the App with Google authentication securely.
+      </DialogDescription>
+      
+    </DialogHeader>
+
+    {/* 2. Action Button/Form Elements */}
+    {/* Buttons usually go directly inside DialogContent or a Footer */}
+    <div className="mt-6">
+      <Button className="w-full" onClick={() => glogin()}><FcGoogle />
+        Sign in with Google
+      </Button>
+    </div>
+    
+  </DialogContent>
+</Dialog>
     </div>
   );
 }
