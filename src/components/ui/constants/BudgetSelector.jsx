@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function BudgetSelector() {
+function BudgetSelector({ onBudgetSelect }) {
   const [selectedBudget, setSelectedBudget] = useState("");
 
   const budgets = [
@@ -17,7 +17,7 @@ function BudgetSelector() {
       {budgets.map((budget) => (
         <div
           key={budget.value}
-          onClick={() => setSelectedBudget(budget.value)}
+          onClick={() => handleSelect(budget.value)}
           className={`flex flex-col items-center border rounded-xl shadow-md p-4 w-28 cursor-pointer transition-transform 
             ${
               selectedBudget === budget.value

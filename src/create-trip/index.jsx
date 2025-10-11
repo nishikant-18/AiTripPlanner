@@ -14,8 +14,9 @@ function CreateTrip() {
     budget: "",
     group: "",
   });
+   const [loading, setLoading] = useState(false);
+  const API_KEY = import.meta.env.VITE_AUTOCOMPLETE_API;
 
-  const API_KEY = AutoCompleteAPI;
 
   
   useEffect(() => {
@@ -52,19 +53,22 @@ function CreateTrip() {
   };
 
   // ✅ Handle form submission
-  const handleSubmit = () => {
-    if(formData?.noOfDays>3&&!formData?.budget||!formData?.destination||!selectedGroup){
-      alert("Please fill all the fields");
-      return;
-    }
-    else{
-    const finalData = {
-      ...formData,
-      group: selectedGroup,
-    };
-    console.log("Form Data:", finalData);
+  const handleSubmit = async () => {
+  const finalData = { ...formData, group: selectedGroup };
+  try {
+    setLoading(true);
+    const response = await axios.post("http://localhost:4000/api/generate-trip", finalData);
+    console.log("Gemini Itinerary:", response.data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
   }
-  };
+};
+  
+  
+
+
 
   return (
     <div className="sm:px-10 md:px-32 lg:px-56 xl:px-10 px-5 mt-10">
@@ -176,7 +180,7 @@ function CreateTrip() {
           onClick={handleSubmit}
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg shadow-md"
         >
-          Generate Itinerary
+          {loading ? "Generating..." : "Generate Itinerary"}
         </Button>
       </div>
     </div>
